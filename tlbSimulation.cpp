@@ -19,7 +19,6 @@ struct node
     unsigned int frame;
 };
 
-
 int turn = 0;
 /*
 set = TLB_ENTRIES/ASSOCIATIVITY
