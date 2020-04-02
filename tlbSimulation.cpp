@@ -13,12 +13,12 @@
 
 using namespace std;
 ui pageOffset;
-
 struct node
 {
     ui tag;
     unsigned int frame;
 };
+
 
 int turn = 0;
 /*
