@@ -81,9 +81,9 @@ void setValidBit(struct node *tlbFT) // This function is used to initialize vali
     s = setG;
     for (i = 0; i < s; i++)
     {
-        for (j = 0; j < ASSOCIATIVITY; j++)
+        for (j = 0; j < k_wayG; j++)
         {
-            (tlbFT + i * ASSOCIATIVITY + j)->valid = 0;
+            (tlbFT + i * k_wayG + j)->valid = 0;
         }
     }
 }
