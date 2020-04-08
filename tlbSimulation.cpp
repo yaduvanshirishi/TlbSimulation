@@ -53,7 +53,7 @@ int fifo(int setValue,ui tagValue,struct node *tlbF)
     //cout<<"IN FIFO\n";
 
     (tlbF + setValue * k_wayG + i)->tag = tagValue;
-    (tlbF + setValue * k_wayG + i)->frame = rand() % ((ui)pow(2, frame));
+    (tlbF + setValue * k_wayG + i)->frame = rand();
     //cout<<"TAG FIFO "<<(tlbF + setValue * k_wayG + i)->tag<<" VALID "<<
     //(tlbF + setValue * k_wayG + i)->valid<<" COUNT "<<count[setValue]<<" SET "<<setValue<<endl;
     count[setValue] = (count[setValue] + 1)%size;
@@ -99,7 +99,7 @@ int pageFault(int setValue,ui tagValue,struct node *tlbPF)
     if((!checkValid)) //NOT FULL AND MISS
     {
         (tlbPF + setValue * k_wayG + i)->tag = tagValue;
-        (tlbPF + setValue * k_wayG + i)->frame = rand() % ((ui)pow(2, frame));
+        (tlbPF + setValue * k_wayG + i)->frame = rand();
         (tlbPF + setValue * k_wayG + i)->valid = 1;
         if(size-1 == i) full[setValue] = true;
         count[setValue] = (count[setValue] + 1)%size;
