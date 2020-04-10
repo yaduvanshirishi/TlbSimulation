@@ -11,7 +11,6 @@
 |    tag    |   set offset |   page offset   |
  --------------------------------------------
 */
-
 #include <iostream>
 #include <cstdio>
 #include <cstdint>
