@@ -1,0 +1,48 @@
+LRU cache
+-----------------
+
+When hit occurs:
+
+-> Counter of the referenced block is reset to 0
+-> Counters with values originally lower than the referenced one are incremented by 1, and all others ramain unchanged.
+
+
+ ---------------
+|      B0       |  01(L)     10
+ ---------------
+|      B1       |  00(L)     01
+ --------------- 
+|      B2       |  11        11
+ ---------------
+|      B3       |  10(<-) -> 00
+ ---------------
+
+
+When miss occurs:
+
+-> If the set is not full, the counter associated with the new block loaded is set to 0, and all other counters are incremented by 1.
+-> If the set is full, the block with counter value 3(maximum count) is removed, the new block put in its place, and the counter set to 0. The other 3 counters are incremented by 1. 
+
+
+ ---------------
+|               |  
+ ---------------
+|      B1(*)    |  01
+ --------------- 
+|      B2       |  11
+ ---------------
+|      B3       |  00 
+ ---------------
+
+
+ ---------------
+|               | 
+ ---------------
+|      B1       |  00
+ --------------- 
+|      B2       |  11      
+ ---------------
+|      B3       |  01
+ ---------------
+
+
