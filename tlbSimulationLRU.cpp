@@ -266,7 +266,7 @@ int main()
     cout<<"TLB Entries: "<<ENTRIES<<" entries"<<"\n";
     cout<<"Associativity: "<<ASSOCIATIVITY<<"-way"<<"\n";
     cout<<"Page Offset Bits: "<<PAGEOFFSET<<" bits"<<"\n\n";
-    cout<<"Tag: "<<tagG<<" bits,"<<" Set Bits: "<<setG<<" bits"<<"\n";
+    cout<<"Tag: "<<tagG<<" bits,"<<" Set Bits: "<<setGB<<" bits"<<"\n";
     cout<<"Total Address : "<<total<<"\n";
     cout<<"Total Hits : "<<countH<<"\n";
     cout<<"Hit Ratio : "<<((double)countH / (double)total)<<"\n\n";
