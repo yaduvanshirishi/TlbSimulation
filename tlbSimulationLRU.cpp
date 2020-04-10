@@ -1,4 +1,6 @@
 /*
+For Idea: Use LRU.txt file
+
  if 64 bit LA
    
    Page Size 2MB so offset = 21 bits
@@ -23,7 +25,7 @@
 #define ENTRIES 64
 #define ASSOCIATIVITY 4
 #define PAGEOFFSET 21
-#define INPUT_FILE "address.txt"
+#define INPUT_FILE "addresses.txt"
 #define FRAME 20 //number of bits for frame
 #define ui uint64_t
 
@@ -78,7 +80,7 @@ void setValidBit(struct node **tlbFT) // This function is used to initialize val
 
 int updateCounter(ui setValue, int index, struct node *tlbUC)
 {
-    //cout << "Before Update Counter:\n";
+    
     for (int i = 0; i < setG; i++)
     {
         for (int j = 0; j < k_wayG; j++)
@@ -86,9 +88,7 @@ int updateCounter(ui setValue, int index, struct node *tlbUC)
             int c = (tlbUC + i * k_wayG + j)->counter;
             int v = (tlbUC + i * k_wayG + j)->valid;
             ui t = (tlbUC + i * k_wayG + j)->tag;
-            //cout << " Count: " << c << " Valid: " << v << " Tag: " << t<<"|";
         }
-        //cout << "\n";
     }
     int x = 0;
     for (int i = 0; i < k_wayG; i++)
@@ -99,7 +99,7 @@ int updateCounter(ui setValue, int index, struct node *tlbUC)
             (tlbUC + setValue * k_wayG + i)->counter += 1;
         }
     }
-    //cout << "After Update Counter:\n";
+
     for (int i = 0; i < setG; i++)
     {
         for (int j = 0; j < k_wayG; j++)
@@ -107,15 +107,14 @@ int updateCounter(ui setValue, int index, struct node *tlbUC)
             int c = (tlbUC + i * k_wayG + j)->counter;
             int v = (tlbUC + i * k_wayG + j)->valid;
             ui t = (tlbUC + i * k_wayG + j)->tag;
-            //cout << " Count: " << c << " Valid: " << v << " Tag: " << t<<"|";
         }
-        //cout << "\n";
     }
-    //cout << "\n";
 }
-int updateCounterHit(ui setValue, int index, struct node *tlbUCH)
+int updateCounterHit(ui setValue, int index, struct node *tlbUCH)//It will update counter
 {
-    //cout << "Before Update HIT Counter:"<<endl;
+    //Counter of the referenced block is reset to 0
+    //Counters with values originally lower than the referenced one are incremented by 1, and all others ramain unchanged.
+
     for (int i = 0; i < setG; i++)
     {
         for (int j = 0; j < k_wayG; j++)
@@ -123,9 +122,7 @@ int updateCounterHit(ui setValue, int index, struct node *tlbUCH)
             int c = (tlbUCH + i * k_wayG + j)->counter;
             int v = (tlbUCH + i * k_wayG + j)->valid;
             ui t = (tlbUCH + i * k_wayG + j)->tag;
-            //cout << " Count: " << c << " Valid: " << v << " Tag: " << t<<"|";
         }
-        //cout << "\n";
     }
     int x = 0;
     int c = (tlbUCH + setValue * k_wayG + index)->counter;
@@ -139,37 +136,11 @@ int updateCounterHit(ui setValue, int index, struct node *tlbUCH)
         }
     }
     (tlbUCH + setValue * k_wayG + index)->counter = 0;
-    //cout << "After Update HIT Counter:\n";
-    for (int i = 0; i < setG; i++)
-    {
-        for (int j = 0; j < k_wayG; j++)
-        {
-            int c = (tlbUCH + i * k_wayG + j)->counter;
-            int v = (tlbUCH + i * k_wayG + j)->valid;
-            ui t = (tlbUCH + i * k_wayG + j)->tag;
-            //cout << " Count: " << c << " Valid: " << v << " Tag: " << t<<"|";
-        }
-        //cout << "\n";
-    }
+
 }
+
 int getPageFrame(struct node *tlbGPF, ui logicalAddressL)
 {
-    static int time = 0;
-    /*
-    ui pageSize = (ui)pow(2, pageOffsetG);
-    ui pageValueL = logicalAddressL % pageSize;
-    logicalAddressL = logicalAddressL / pageSize; //PAGE BITS REMOVED
-    int setValue = logicalAddressL % setG;
-    //printf("setValue :%d\n",setValue);
-    logicalAddressL = logicalAddressL / setG;
-    ui tagSize = (ui)pow(2, tagG);
-    ui tagValue = logicalAddressL % tagSize; //TAG BITS REMAINED
-    */
-    /*
-    ui pageValueL = logicalAddressL & 0x000000000001FFFFF;
-    int setValue = (logicalAddressL & 0x0000000000200000) >> 21;
-    ui tagValue = (logicalAddressL & 0xFFFFFFFFFFC00000) >> 22;*/
-
     ui pageValueL = logicalAddressL & 0x000000000001FFFFF;
     int setValue = (logicalAddressL & 0x0000000001E00000) >> 21;
     ui tagValue = (logicalAddressL & 0xFFFFFFFFFE000000) >> 25;
@@ -177,9 +148,6 @@ int getPageFrame(struct node *tlbGPF, ui logicalAddressL)
     
     int size = ASSOCIATIVITY - 1;
     int index = 0;
-	//time++;
-    //cout <<"\nIN GET PAGE FRAME :"<<time<<endl;
-    //cout<<"\nTAG:"<<tagValue<<endl;
     int d, h;
     if (!full[setValue])
         for (int i = 0; i < k_wayG; i++) //NOT FILL
@@ -241,13 +209,11 @@ int getPageFrame(struct node *tlbGPF, ui logicalAddressL)
                 maxIndex = i;
             }
         }
-        //cout<<"\n"<<"MAX INDEX:"<<maxIndex<<endl;
         updateCounter(setValue, maxIndex, tlbGPF);
         (tlbGPF + setValue * k_wayG + maxIndex)->tag = tagValue;
         (tlbGPF + setValue * k_wayG + maxIndex)->counter = 0;
         (tlbGPF + setValue * k_wayG + maxIndex)->valid = 1;
         (tlbGPF + setValue * k_wayG + maxIndex)->frame = rand();
-        //cout << "IN GET PAGE FRAME: After Update COunter\n";
         for (int i = 0; i < setG; i++)
         {
             for (int j = 0; j < k_wayG; j++)
@@ -255,9 +221,7 @@ int getPageFrame(struct node *tlbGPF, ui logicalAddressL)
                 int c = (tlbGPF + i * k_wayG + j)->counter;
                 int v = (tlbGPF + i * k_wayG + j)->valid;
                 ui t = (tlbGPF + i * k_wayG + j)->tag;
-                //cout << " Count: " << c << " Valid: " << v << " Tag: " << t<<"|";
             }
-            //cout << "\n";
         }
         return 0;
     }
@@ -275,10 +239,7 @@ int main()
     }
 
     struct node *tlb = (struct node *)malloc(setG * k_wayG * sizeof(struct node));
-    assert(tlb != NULL);
-
-    count = (int *)malloc(setG * sizeof(int)); //This is to tack the TLB
-    count[setG] = {0};                         //Initialize all with 0
+    assert(tlb != NULL); 
 
     full = (bool *)malloc(setG * sizeof(bool));
     full[setG] = {false};
@@ -297,18 +258,16 @@ int main()
             countH++;
         total++;
     }
-    /*
-    for(int i=0;i<setG;i++)
-    {
-        for(int j=0;j<ASSOCIATIVITY;j++)
-        {
-            cout<<"Valid-"<<(tlb + i * k_wayG + j)->valid<<" TAG "<<(tlb + i * k_wayG + j)->tag<<" ";
-        }
-        cout<<endl;
-    }*/
-    cout << "\n-DETAILS----------------------------------------\n"
+
+    cout << "\n-----------------STATS----------------------------------------\n"
          << endl;
-    printf("Total Address : %ld\n", total);
-    printf("Total Hits : %ld\n", countH);
-    printf("Hit Ratio : %f\n", (double)countH / (double)total);
+
+    cout<<"Logical Address Bits: "<<LADDR<<" bits"<<"\n";
+    cout<<"TLB Entries: "<<ENTRIES<<" entries"<<"\n";
+    cout<<"Associativity: "<<ASSOCIATIVITY<<"-way"<<"\n";
+    cout<<"Page Offset Bits: "<<PAGEOFFSET<<" bits"<<"\n\n";
+    cout<<"Tag: "<<tagG<<" bits,"<<" Set Bits: "<<setG<<" bits"<<"\n";
+    cout<<"Total Address : "<<total<<"\n";
+    cout<<"Total Hits : "<<countH<<"\n";
+    cout<<"Hit Ratio : "<<((double)countH / (double)total)<<"\n\n";
 }
