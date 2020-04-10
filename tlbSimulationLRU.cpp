@@ -23,7 +23,7 @@
 #define ENTRIES 64
 #define ASSOCIATIVITY 4
 #define PAGEOFFSET 21
-#define INPUT_FILE "addresses.txt"
+#define INPUT_FILE "address.txt"
 #define FRAME 20 //number of bits for frame
 #define ui uint64_t
 
