@@ -11,6 +11,7 @@
 |    tag    |   set offset |   page offset   |
  --------------------------------------------
 */
+
 #include <iostream>
 #include <cstdio>
 #include <cstdint>
@@ -22,7 +23,7 @@
 #define ENTRIES 64
 #define ASSOCIATIVITY 4
 #define PAGEOFFSET 21
-#define INPUT_FILE "address.txt"
+#define INPUT_FILE "addresses.txt"
 #define FRAME 20 //number of bits for frame
 #define ui uint64_t
 
@@ -45,35 +46,31 @@ ui tagG = 0;
 unsigned int frame = FRAME;
 int *count;
 bool *full;
-int fifo(int setValue,ui tagValue,struct node *tlbF)
+
+void fifo(int setValue,ui tagValue,struct node *tlbF)
 {
     int size = ASSOCIATIVITY;
     int i = count[setValue];
-    //cout<<"IN FIFO\n";
 
     (tlbF + setValue * k_wayG + i)->tag = tagValue;
-    (tlbF + setValue * k_wayG + i)->frame = rand();
-    //cout<<"TAG FIFO "<<(tlbF + setValue * k_wayG + i)->tag<<" VALID "<<
-    //(tlbF + setValue * k_wayG + i)->valid<<" COUNT "<<count[setValue]<<" SET "<<setValue<<endl;
+    (tlbF + setValue * k_wayG + i)->frame = rand() % ((ui)pow(2, frame));
     count[setValue] = (count[setValue] + 1)%size;
 }
+
 int contains(int setValue,ui tagValue,struct node *tlbC)
 {
     int i,validC;
     ui tagC;
 
-    //cout<<"IN CONTAINS\n";
     for (i = 0; i < k_wayG; i++)
     {
         validC = (tlbC + setValue * k_wayG + i)->valid;
         tagC = (tlbC + setValue * k_wayG + i)->tag;
         if (validC && (tagC == tagValue)) 
         {
-            //cout<<"HIT\n";
             return 1;//HIT
         }
     }
-    //cout<<"MISS\n";
     return 0; //MISS
 }
 
@@ -84,27 +81,23 @@ int pageFault(int setValue,ui tagValue,struct node *tlbPF)
 
     int i = count[setValue];
 
-    //cout<<"TAG PF-IN "<<(tlbPF + setValue * k_wayG + i)->tag<<" VALID "<<
-    //(tlbPF + setValue * k_wayG + i)->valid<<" COUNT "<<count[setValue]<<" SET "<<setValue<<endl;
-
     tV = (tlbPF + setValue*size + i)->tag ;
     checkValid = (tlbPF + setValue*size + i)->valid;
-    if(contains(setValue,tagValue,tlbPF)) return 1; //HIT
-    if((full[setValue])) {
+    if(contains(setValue,tagValue,tlbPF)) return 1; //CASE 1- NOT FULL AND HIT , CASE 2- HIT AND FULL
+    if((full[setValue])) {                //CASE 3: FULL AND MISS
         fifo(setValue,tagValue,tlbPF);
         return 0;
     }
         
-    if((!checkValid)) //NOT FULL AND MISS
+    if((!checkValid)) //CASE 4: NOT FULL AND MISS
     {
         (tlbPF + setValue * k_wayG + i)->tag = tagValue;
-        (tlbPF + setValue * k_wayG + i)->frame = rand();
+        (tlbPF + setValue * k_wayG + i)->frame = rand() % ((ui)pow(2, frame));
         (tlbPF + setValue * k_wayG + i)->valid = 1;
         if(size-1 == i) full[setValue] = true;
         count[setValue] = (count[setValue] + 1)%size;
+            
     }
-    //cout<<"TAG PF-OUT "<<(tlbPF + setValue * k_wayG + i)->tag<<" VALID "
-    //<<(tlbPF + setValue * k_wayG + i)->valid<<" COUNT "<<count[setValue]<<" SET "<<setValue<<endl;
     return 0;
 }
 
@@ -119,20 +112,6 @@ int calculateBits(int lAddr)
     setGB = log2(setG);
     tagG = lAddr - setGB - pageOffsetG;
 }
-/**
-void updateTlb(ui tagFT, int setV, struct node *tlbFT) // THis function is used when miss then that values is added in tlb
-{
-    int i, j;
-    for (i = 0; i < k_wayG; i++)
-    {
-        if ((tlbFT + setV * k_wayG + i)->valid == 0)
-        {
-            (tlbFT + setV * k_wayG + i)->tag = tagFT;
-            (tlbFT + setV * k_wayG + i)->frame = rand() % ((ui)pow(2, frame));
-            (tlbFT + setV * k_wayG + i)->valid = 1;
-        }
-    }
-}*/
 
 void setValidBit(struct node *tlbFT) // This function is used to initialize valid bit by 0
 {
@@ -150,41 +129,15 @@ void setValidBit(struct node *tlbFT) // This function is used to initialize vali
 
 int getPageFrame(struct node *tlbGPF, ui logicalAddressL)
 {
-
-    /*
-    ui pageSize = (ui)pow(2, pageOffsetG);
-    ui pageValueL = logicalAddressL % pageSize;
-    logicalAddressL = logicalAddressL / pageSize; //PAGE BITS REMOVED
-    int setValue = logicalAddressL % setG;
-    //printf("setValue :%d\n",setValue);
-    logicalAddressL = logicalAddressL / setG;
-    ui tagSize = (ui)pow(2, tagG);
-    ui tagValue = logicalAddressL % tagSize; //TAG BITS REMAINED
-    */
-
     ui pageValueL = logicalAddressL & 0x000000000009FFFFF;
     int setValue = (logicalAddressL & 0x0000000001E00000) >> 21;
     ui tagValue = (logicalAddressL & 0xFFFFFFFFFE000000) >> 25;
 
     int val=pageFault(setValue,tagValue,tlbGPF);
-    if(val == 1) return 1;
-    return 0;
+    if(val == 1) return 1; //HIT
+    return 0; //MISS
 }
-/*
-int countDigits(int digits)
-{
-    int counts = 1;
-    ui d;
-    while (digits > 0)
-    {
-        d = (ui)pow(10, counts);
-        digits = digits / d;
-        ++counts;
-    }
-    d = d * 10; //IT WILL RETURN 10^DIGITS
-    return d;
-}
-*/
+
 int main()
 {
     cout << "\nSimulation is starting ... \n"
@@ -209,29 +162,27 @@ int main()
     setValidBit(tlb);
 
     int temp;
-    long int count = 0, total = 0;
+    long int countH = 0, total = 0;
     fstream myfile(INPUT_FILE, ios_base::in);
     cout << "Input is taken from address.txt file:\n";
     ui address;
     while (myfile >> address)
     {
-        //printf("%" PRIu64"\n" ,address);
         int x = getPageFrame(tlb, address);
         if (x == 1)
-            count++;
+            countH++;
         total++;
     }
-    /*
-    for(int i=0;i<setG;i++)
-    {
-        for(int j=0;j<ASSOCIATIVITY;j++)
-        {
-            cout<<"Valid-"<<(tlb + i * k_wayG + j)->valid<<" TAG "<<(tlb + i * k_wayG + j)->tag<<" ";
-        }
-        cout<<endl;
-    }*/
-    cout << "\n-DETAILS----------------------------------------\n" << endl;
-    printf("Total Address : %ld\n", total);
-    printf("Total Hits : %ld\n", count);
-    printf("Hit Ratio : %f\n", (double)count / (double)total);
+
+    cout << "\n-----------------STATS----------------------------------------\n"
+         << endl;
+
+    cout<<"Logical Address Bits: "<<LADDR<<" bits"<<"\n";
+    cout<<"TLB Entries: "<<ENTRIES<<" entries"<<"\n";
+    cout<<"Associativity: "<<ASSOCIATIVITY<<"-way"<<"\n";
+    cout<<"Page Offset Bits: "<<PAGEOFFSET<<" bits"<<"\n\n";
+    cout<<"Tag: "<<tagG<<" bits,"<<" Set Bits: "<<setGB<<" bits"<<"\n";
+    cout<<"Total Address : "<<total<<"\n";
+    cout<<"Total Hits : "<<countH<<"\n";
+    cout<<"Hit Ratio : "<<((double)countH / (double)total)<<"\n\n";
 }
