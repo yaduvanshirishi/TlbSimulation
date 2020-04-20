@@ -1,16 +1,3 @@
-/*
- if 64 bit LA
-   
-   Page Size 2MB so offset = 21 bits
-   k-way, k = 4
-   Tlb entries = 64
-   so, #set = 2^6/2^2 = 2^4 = 16
-  Tag = 64 - 4 - 21 = 49bits
-  
- --------------------------------------------
-|    tag    |   set offset |   page offset   |
- --------------------------------------------
-*/
 #include <iostream>
 #include <cstdio>
 #include <cstdint>
@@ -288,8 +275,6 @@ int main()
     ui address;
     while (myfile >> address)
     {
-        //printf("%" PRIu64"\n" ,address);
-        
         #ifdef PAGE_REPLACEMENT
         int x = getPageFrameLRU(tlb, address);
         #else 
@@ -307,9 +292,17 @@ int main()
     std::cout<<"TLB Entries: "<<ENTRIES<<" entries"<<"\n";
     std::cout<<"Associativity: "<<ASSOCIATIVITY<<"-way"<<"\n";
     std::cout<<"Page Offset Bits: "<<PAGEOFFSET<<" bits"<<"\n\n";
+
+    #ifdef PAGE_REPLACEMENT
+    std::cout<<"-:LRU PAGE REPLACEMENT:-\n";
+    #else
+    std::cout<<"-:FIFO PAGE REPLACEMENT:-\n";
+    #endif
+ 
     std::cout<<"Tag: "<<tagG<<" bits,"<<" Set Bits: "<<setGB<<" bits"<<"\n";
     std::cout<<"Total Address : "<<total<<"\n";
     std::cout<<"Total Hits : "<<countH<<"\n";
+    
     std::cout<<"Hit Ratio : "<<((double)countH / (double)total)<<"\n\n";
 
     return 0;
